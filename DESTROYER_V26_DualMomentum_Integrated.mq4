@@ -12568,7 +12568,7 @@ void ExecuteMomentumBurstDetector()
 //| Session-adaptive: Asia fade + London/NY trend continuation      |
 //| Magic: 999102 | Index: 8                                        |
 //+------------------------------------------------------------------+
-ENUM_FOREX_SESSION
+enum ENUM_FOREX_SESSION
 {
     SESSION_ASIA,
     SESSION_LONDON,

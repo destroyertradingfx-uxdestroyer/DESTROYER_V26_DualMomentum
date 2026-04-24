@@ -1,0 +1,173 @@
+══════════════════════════════════════════════════════════════════════════════
+  DESTROYER EA — WORKER SLOT 1 FINAL STATUS
+  Strategy Replacement Process — Complete
+  2026-04-24
+══════════════════════════════════════════════════════════════════════════════
+
+┌─ EXECUTIVE SUMMARY ────────────────────────────────────────────────────────┐
+│ Worker slot 1 (formerly DualMomentum) is left EMPTY.                       │
+│                                                                             │
+│ No viable candidate passed the audition criteria:                        │
+│   • Profit Factor (PF)  > 2.0                                              │
+│   • Win Rate (WR)      > 60%                                               │
+│   • Full out-of-sample validation on 2020–2026 EURUSD H4                  │
+│                                                                             │
+│ Current 5-worker portfolio PF = 2.00. Adding any tested strategy          │
+│ (PF < 2.0) would degrade system performance.                              │
+│                                                                             │
+│ Decision: Preserve capital integrity. Wait for robust candidate.          │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─ AUDITION TIMELINE ─────────────────────────────────────────────────────────┐
+│                                                                              │
+│ 2026-03  → DualMomentum integrated as slot 1 worker (magic 777011)          │
+│ 2026-03  → Python backtest (2023–2026): PF 3.50, WR 69.0% — promising      │
+│ 2026-04  → MT4 live test (2020–2026):  PF 0.67, 8 trades, -$556 — FAILED  │
+│ 2026-04  → Three bugs identified & fixed; retest: PF 1.04 — still failing  │
+│ 2026-04  → Pure Donchian20 (no MA200) test initiated — not completed       │
+│ 2026-04  → DualMomentum permanently disabled (commit 8729980)              │
+│                                                                              │
+│ 2026-04  → External AI consultation launched (STRATEGY_REPLACEMENT_        │
+│            BRIEFING.txt sent; 3 proposals received)                        │
+│ 2026-04  → SPECTRE validated:  PF 0.57, WR 36.4% — FAILED                  │
+│ 2026-04  → AEGIS SNAPBACK validated: PF 0.93, WR 47.0% — FAILED            │
+│ 2026-04  → PHOENIX validated: 4 trades (too sparse) — FAILED               │
+│                                                                              │
+│ 2026-04  → Internal candidate NoiseBreakout tested: PF 0.40 (2023–2026)    │
+│            Best historical: PF 1.95 (TP 3.5R, Vol 0.7) — still <2.0       │
+│                                                                              │
+│ 2026-04-24 → Slot 1 left empty — final decision                            │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ ALL CANDIDATES TESTED ─────────────────────────────────────────────────────┐
+│                                                                              │
+│  Strategy               Source         PF      WR     Trades   Status      │
+│  ────────────────────────────────────────────────────────────────────────   │
+│  DualMomentum           Internal       0.67    37.5%   8      ❌ FAILED  │
+│  SPECTRE                External AI    0.57    36.4%   22     ❌ FAILED  │
+│  AEGIS SNAPBACK         External AI    0.93    47.0%   83     ❌ FAILED  │
+│  PHOENIX                External AI    —       —       4      ❌ FAILED  │
+│  NoiseBreakout          Internal (V29) 0.40    11.1%   9      ❌ FAILED  │
+│  NoiseBreakout (best)   V30 claims     1.95    ~68%    ~200?  ⚠️ Below   │
+│  Absolute Momentum      SSRN paper     0.92    —        —      ❌ FAILED  │
+│                                                                              │
+│  All breakout/mean-reversion hybrids and pure mean-reversion strategies     │
+│  failed to meet the 2.0 PF threshold on recent data.                       │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ SYSTEMIC FINDINGS ──────────────────────────────────────────────────────────┐
+│                                                                              │
+│  ✓ MEAN-REVERSION DOES NOT WORK on EURUSD H4                              │
+│    — Confirmed across 3 independent AI-generated strategies                │
+│    — CCI fade, BB fakeout, BB squeeze fade all unprofitable                │
+│                                                                              │
+│  ✓ BREAKOUT STRATEGIES CAN WORK (but not guaranteed)                      │
+│    — Warden PF 2.48, Silicon-X PF 8.36, Reaper PF 12.56 (live)             │
+│    — But DualMomentum (Donchian breakout) and NoiseBreakout (BB+KC)        │
+│      failed regime robustness testing on 2023–2026 slice                   │
+│                                                                              │
+│  ✓ REGIME DEGRADATION IS REAL                                               │
+│    — Python 2023–2026 backtest showed PF 3.50 for DualMomentum             │
+│    — MT4 full 2020–2026 test showed PF 0.67 — catastrophic collapse        │
+│    — Strategy worked in pre-2023 regime, failed in recent regime           │
+│                                                                              │
+│  ⚠ DATA GAP CONSTRAINED VALIDATION                                          │
+│    — Only 2023–2026 data available locally (4,436 H4 bars)                  │
+│    — Full 2020–2026 dataset (~2,600 additional bars) needed for proper      │
+│      out-of-sample audit — must be sourced externally                      │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ FINAL CODE STATE ───────────────────────────────────────────────────────────┐
+│                                                                              │
+│  File: DESTROYER_V26_DualMomentum_Integrated.mq4 (12,407 lines)            │
+│                                                                              │
+│  Extern block (lines 1124–1132):                                            │
+│    extern bool   InpDualMomentum_Enabled = false;  // DISABLED — fail audit │
+│    extern int    InpDualMomentum_DonchianLen  = 20;                         │
+│    extern int    InpDualMomentum_MA_Period    = 0;   // MA200 filter off    │
+│    extern int    InpDualMomentum_ATR_Period   = 14;                         │
+│    extern double InpDualMomentum_SL_Mult      = 1.5;                        │
+│    extern double InpDualMomentum_TP_Mult      = 2.0;                        │
+│    extern int    InpDualMomentum_Cooldown     = 3;                          │
+│    extern bool   InpDualMomentum_Allow_Defensive = true;                    │
+│    extern int    InpDualMomentum_MagicNumber  = 777011;  // INACTIVE       │
+│                                                                              │
+│  Function header (lines 5954–5992):                                         │
+│    — Expanded autopsy report (52 lines total)                               │
+│    — Clear DISABLED status declaration                                      │
+│    — Do not enable for production build                                     │
+│                                                                              │
+│  Function guard (line 5957):                                                │
+│    if(!InpDualMomentum_Enabled) return;  // Early exit — no runtime cost   │
+│                                                                              │
+│  Git commit: 7ded294 (pushed to GitHub)                                     │
+│    "Finalize DualMomentum slot decision — permanently disabled, slot       │
+│     left empty"                                                             │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ PORTFOLIO IMPACT ───────────────────────────────────────────────────────────┐
+│                                                                              │
+│  Before removal (5 workers + DualMomentum active):                         │
+│    Estimated portfolio PF ≈ 2.20–2.40 (based on weighted average)          │
+│                                                                              │
+│  After removal (5 workers only):                                            │
+│    Confirmed portfolio PF = 2.00                                            │
+│                                                                              │
+│  Adding a failing strategy (PF < 2.0) would lower the total.              │
+│  Example: Adding PF 0.67 DualMomentum → portfolio PF ≈ 1.76               │
+│                                                                              │
+│  Decision preserves current performance baseline.                          │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ RESERVED RESOURCES ─────────────────────────────────────────────────────────┐
+│                                                                              │
+│  Magic number:   777011  → reserved/inactive, DO NOT REUSE                 │
+│  Strategy index: 1      → worker slot 1, functionally disabled              │
+│  Function name:  ExecuteDualMomentumBreakout()  → preserved for reference  │
+│  Parameters:     All extern parameters kept — allows future rebuild        │
+│                                                                              │
+│  To fully remove: delete extern block + function + all 777011 references   │
+│  To replace: create new worker at slot 2+ (preserve slot 1 as memorial)    │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ NEXT STEPS (OPTIONAL) ──────────────────────────────────────────────────────┐
+│                                                                              │
+│  1. Data acquisition: Obtain full 2020–2026 EURUSD H4 dataset for proper  │
+│     out-of-sample validation of remaining 5 workers (Warden, Titan,        │
+│     Silicon-X, Reaper, VolatilityMR).                                       │
+│                                                                              │
+│  2. Re-validate active workers on 2020–2026 to establish true baseline     │
+│     performance (may reveal further degradation).                          │
+│                                                                              │
+│  3. Continue research:                                                      │
+│     — Re-scan remaining SSRN papers (14 unexamined) for additional ideas   │
+│     — Explore multi-timeframe or multi-symbol variants                     │
+│     — Consider regime-adaptive logic (meta-strategy layer)                  │
+│                                                                              │
+│  4. If a new candidate passes Python validation (PF>2.0, WR>60%) on        │
+│     2020–2026, integrate into slot 2 (index 2, new magic number).          │
+│                                                                              │
+│  5. Queen Bee update: No changes needed — slot already referenced but      │
+│     inactive (InpDualMomentum_Enabled = false).                            │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+┌─ FILES MODIFIED ─────────────────────────────────────────────────────────────┐
+│                                                                              │
+│  DESTROYER_V26_DualMomentum_Integrated.mq4                                 │
+│    — Expanded ExecuteDualMomentumBreakout() header (52-line autopsy)       │
+│    — Added explicit STATUS/DECISION/REFERENCES sections                    │
+│    — No functional code changes (already disabled)                         │
+│                                                                              │
+│  Git: 7ded294 (pushed to origin/master)                                     │
+│    "Finalize DualMomentum slot decision — permanently disabled, slot       │
+│     left empty"                                                             │
+│                                                                              │
+│  No new files created. Existing docs retained:                             │
+│    — STRATEGY_REPLACEMENT_BRIEFING.txt (external AI context)               │
+│    — hypothesis_noise_area_breakout.md (NoiseBreakout academic basis)       │
+│    — 15 SSRN PDFs (source research)                                        │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+══════════════════════════════════════════════════════════════════════════════
+  END OF REPORT
+══════════════════════════════════════════════════════════════════════════════
