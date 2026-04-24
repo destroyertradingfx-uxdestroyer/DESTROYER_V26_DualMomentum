@@ -1,0 +1,222 @@
+════════════════════════════════════════════════════════════════════════════════
+  DESTROYER TRADING SYSTEM — STRATEGY REPLACEMENT BRIEFING
+  For: External AI Advisors / Research Agents
+  Date: 2026-04-24
+  Version: 1.0
+════════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SECTION 1 — SYSTEM OVERVIEW                                                 │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+We run an automated MQL4 forex trading system called DESTROYER, built on a
+"Queen Bee + Worker Strategies" architecture (the "Beehive").
+
+  ┌─────────────────┐
+  │   Queen Bee     │  ← Central risk manager
+  │   (Risk Core)   │    • Manages all open positions
+  │                 │    • Enforces portfolio-level stops
+  │  • Max total DD │    • Monthly high-water mark tracking
+  │    limit: 20%   │    • Kill switch: suspend all workers if portfolio
+  │  • Per-worker    │      drawdown exceeds threshold
+  │    magic slots  │    • Allocates risk budgets to each worker
+  └────────┬────────┘
+           │ coordinates
+           ▼
+  ┌─────────────────────────────────────────────────────────────┐
+  │                  WORKER STRATEGIES                         │
+  │  (Each is an independent MQL4 EA with unique magic number) │
+  ├─────────────────────────────────────────────────────────────┤
+  │  1. Reaper         → Grid/Martingale on ranging markets    │
+  │     Magic: 777007  PF: 12.56  WR: 71% (high risk)          │
+  │                                                             │
+  │  2. Silicon-X v2   → Volatility breakout with KC filter    │
+  │     Magic: 777008  PF:  8.36  WR: 65%                     │
+  │                                                             │
+  │  3. Warden         → Volatility squeeze (BB/KC)            │
+  │     Magic: 777009  PF:  2.48  WR: 58%                     │
+  │                                                             │
+  │  4. Titan          → EMA pullback with ATR-based exits     │
+  │     Magic: 777010  PF:  2.12  WR: 64%                     │
+  │                                                             │
+  │  5. Noise Breakout → Bollinger/Keltner breakout (disabled)│
+  │     Magic: 77700?  PF:  5.78* (optimized 2023-2026 only)  │
+  │                                                             │
+  │  6. DualMomentum   → Donchian+MA200 (DISABLED)            │
+  │     Magic: 777011  PF:  0.67  FAILED live 2020-2026       │
+  └─────────────────────────────────────────────────────────────┘
+
+The system currently operates on EURUSD H4 timeframe only. All workers share
+the same symbol and timeframe; they run concurrently and their signals are
+filtered/validated by the Queen Bee before execution.
+
+CURRENT TOTAL PORTFOLIO PF (without DualMomentum): 2.00
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SECTION 2 — THE PROBLEM                                                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+DualMomentum (worker slot index 1, magic 777011) has been PERMANENTLY DISABLED
+after failing a full 2020-2026 out-of-sample validation:
+
+  • Python backtest (2023-2026): PF 3.50, WR 69%  ← looked good (regime-specific)
+  • MT4 live test (2020-2026):   PF 0.67, WR —, 8 trades, -$556  ← FAILED
+
+Root cause analysis revealed:
+  1. MA200 filter was necessary but not sufficient
+  2. Fundamental edge was regime-dependent (worked only in 2023-2026 trending market)
+  3. Pure momentum/trend-following strategies consistently fail on EURUSD H4
+
+MISSION: Find and validate a robust replacement strategy to occupy the
+DualMomentum slot (magic 777011, or new magic if we renumber). The replacement
+must be non-momentum, non-trend-following, and should ideally complement the
+existing worker mix (currently heavy on volatility/range strategies).
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SECTION 3 — WHAT WE'VE LEARNED (CRITICAL CONTEXT)                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+1. WHAT WORKS on EURUSD H4 (empirically validated in our system):
+   ✓ Volatility-based entries (BB/KC bands, squeeze plays)
+   ✓ Range/mean-reversion during consolidation (Reaper grid)
+   ✓ Volatility-adjusted position sizing
+   ✓ ATR-based dynamic stops
+   ✗ Pure price momentum (trend-following) — FAILS
+   ✗ Moving-average crossovers — NO EDGE
+   ✗ Donchian breakouts alone — NO EDGE
+
+2. WHAT DOESN'T WORK (tested and rejected):
+   ✗ Absolute Momentum (12-month lookback) — PF 0.92-0.98 on 2023-2026
+   ✗ DualMomentum (Donchian20 + MA200) — PF 0.67 on 2020-2026
+   ✗ EMA Pullback — FAILED validation
+   ✗ Stochastic Oscillator — FAILED validation
+
+3. SYSTEM CONSTRAINTS:
+   • Symbol: EURUSD (forex major pair)
+   • Timeframe: H4 (4-hour bars)
+   • Data availability: Full 2020-2026 historical H4 data accessible
+   • Execution: MT4 Strategy Tester (Control Points mode for iteration,
+     EveryTick for final validation)
+   • Risk: Position sizing must be compatible with Queen Bee's risk allocator
+   • Non-destructive: New strategy must integrate into V26 base EA without
+     breaking existing workers
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SECTION 4 — AVAILABLE RESEARCH MATERIALS                                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+We have 15 SSRN academic papers that were originally scanned for strategy ideas.
+Summary of findings:
+
+  • 11 papers contain backtest performance tables
+  • MOST are equity-intraday focused (1-min, 15-min timeframes)
+  • MOST require non-forex instruments (VIX futures, Treasury bills, stocks)
+  • NO paper provided a ready-to-code, EURUSD-H4-suitable rule
+
+PAPERS OF POTENTIAL INTEREST (may be adaptable):
+  1. ssrn-4824172 — "Effective Intraday Momentum" (Noise Area filter)
+     → Could translate to H4 with volatility scaling
+  2. ssrn-4729284 — Opening Range Breakout (ORB)
+     → Uses session high/low; could use daily or weekly opening range on H4
+
+All other papers are unsuitable (options strategies, monthly momentum, DRL, etc.)
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SECTION 5 — TECHNICAL SPECIFICATIONS                                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+DATA STRUCTURE (EURUSD H4 CSV):
+  Columns: Datetime, Open, High, Low, Close, Volume
+  Frequency: 4-hour bars (06:00, 10:00, 14:00, 18:00, 22:00, 02:00 UTC)
+  Spread: 0.0 pips (backtest uses close prices; live uses live spread)
+  Tick value: 1 pip = 0.0001
+
+BACKTEST RULES (MT4 Strategy Tester):
+  • Mode: Control Points (fast iteration) → EveryTick (final validation)
+  • Initial deposit: $10,000
+  • Leverage: 1:100
+  • Commission: $0 (no per-trade fee)
+  • Slippage: 3 points (0.3 pips)
+  • Model: EveryTick, 100% tick quality for final runs
+
+PERFORMANCE THRESHOLD (to pass audition):
+  • Profit Factor (PF) > 2.0
+  • Win Rate (WR) > 60%
+  • Max Drawdown (DD) < 20%
+  • Trade count: ≥ 30 trades over 6-year period (avoid data-mining)
+  • Must be robust across 2020-2026 (no regime-specific overfitting)
+
+STRATEGY INTEGRATION TEMPLATE (MQL4):
+  Each worker is a self-contained function with:
+  - extern parameters for all tunable values
+  - OnTick() logic that sets signal flags (BuySignal/SellSignal)
+  - Queen Bee validates and executes; Queen manages stops/limits
+  - Magic number unique per worker (777007–777011 currently allocated)
+  - Strategy index unique in registration array
+
+TYPICAL WINNING FORMULA (observed from Reaper/Silicon-X/Warden):
+  1. Volatility filter: ATR or Bollinger/Keltener channel width
+  2. Entry trigger: Price touching/extreme of channel + confirmation
+  3. Stop-loss: 1.0–1.5 × ATR from entry
+  4. Take-profit: 2.0–3.5 × ATR (or trailing)
+  5. Time-based cooldown: 2-4 bars after exit
+  6. Session filter: Avoid low-liquidity periods (optional)
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SECTION 6 — YOUR MISSION (AS EXTERNAL AI ADVISOR)                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+You are being asked: "What strategy should replace DualMomentum?"
+
+YOUR TASK:
+  1. Review the system context above (Sections 1-5)
+  2. Propose ONE concrete trading strategy idea that:
+     - Is suitable for EURUSD H4 (not intraday equity, not monthly momentum)
+     - Uses only standard technical indicators available in MT4
+     - Has clear, parameterized entry/exit rules (no subjective judgment)
+     - Should theoretically perform well in BOTH trending and ranging regimes
+     - Is likely to achieve PF > 2.0, WR > 60% on 2020-2026 data
+  3. Provide the complete specification:
+     • Indicator(s) used + exact periods (e.g., "Bollinger Bands(20, 2.0)")
+     • Entry condition (long and short) with exact formula
+     • Exit condition (stop-loss, take-profit) with exact formula
+     • Any additional filters (time, day, volatility threshold)
+     • Suggested parameter ranges for optimization
+
+DELIVERABLE FORMAT:
+  Please structure your response as:
+
+  ───────────────────────────────────────────────────────────────────────────
+  STRATEGY NAME: [Your creative name]
+  UNIQUE SELLING POINT: [One sentence why this should work where momentum failed]
+  INDICATORS: [List with exact parameters]
+  ENTRY RULES:
+    Long:  [Exact condition, e.g. "Close(0) > BBUpper(20,2.0) and ATR(14) > 0.0005"]
+    Short: [Exact condition]
+  EXIT RULES:
+    Stop Loss: [Exact distance/calculation]
+    Take Profit: [Exact distance/calculation]
+    Alternative exits: [Trailing? Time-based?]
+  FILTERS (optional):
+    [Volatility, session, day-of-week, etc.]
+  PARAMETER RANGES FOR OPTIMIZATION:
+    [Suggested min/max/step for each tunable parameter]
+  HYPOTHESIS: [Brief (2-3 sentences) explanation of why this might have an
+              edge on EURUSD H4, referencing market micro-structure or
+              behavioral finance if possible]
+  RISKS: [What could cause this to fail?]
+  ───────────────────────────────────────────────────────────────────────────
+
+NOTES:
+  • Do NOT propose "use machine learning" or "combine multiple indicators with
+    optimization" — we need a specific, discrete rule-based strategy.
+  • Do NOT propose momentum/trend-following (MA cross, Donchian breakout) —
+    already proven not to work on EURUSD H4.
+  • Prefer strategies that are volatility-aware or mean-reversion oriented.
+  • The strategy will be validated in Python first (2020-2026), then MT4.
+  • If your suggestion is selected, we will implement it, backtest it, and
+    report results back to you.
+
+════════════════════════════════════════════════════════════════════════════════
+  END OF BRIEFING
+════════════════════════════════════════════════════════════════════════════════
