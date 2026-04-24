@@ -1124,7 +1124,7 @@ extern int    InpWarden_Momentum_MA    = 50; // Momentum filter MA period
 sinput string Inp_Header_DualMomentum = "====== DUAL-MOMENTUM BREAKOUT (Donchian20+MA200) ======";
 extern bool   InpDualMomentum_Enabled     = true;        // V26.1: Enable Dual-Momentum Breakout worker
 extern int    InpDualMomentum_DonchianLen  = 20;           // Donchian Channel lookback period
-extern int    InpDualMomentum_MA_Period    = 200;          // Absolute momentum MA filter
+extern int    InpDualMomentum_MA_Period    = 0;          // Absolute momentum MA filter (0 = disabled)
 extern int    InpDualMomentum_ATR_Period   = 14;           // ATR period for stops
 extern double InpDualMomentum_SL_Mult      = 1.5;          // Stop loss multiplier (ATR)
 extern double InpDualMomentum_TP_Mult      = 2.0;          // Take profit multiplier (ATR)
@@ -5988,10 +5988,13 @@ void ExecuteDualMomentumBreakout()
 
    if(atrVal <= 0) return;
 
-   // Signal conditions (using previous bar close to avoid lookahead)
-   double prevClose = Close[1];
-   bool longSignal  = (prevClose >= donchianHigh) && (prevClose >= maPrice);
-   bool shortSignal = (prevClose <= donchianLow)  && (prevClose <= maPrice);
+    // Signal conditions (using previous bar close to avoid lookahead)
+    double prevClose = Close[1];
+    bool maPass = (InpDualMomentum_MA_Period == 0) || (prevClose >= maPrice) || (prevClose <= maPrice);
+    // If MA filter disabled (MA_Period=0), accept any Donchian breakout.
+    // If enabled, require price to be on correct side of MA (long: >= MA, short: <= MA).
+    bool longSignal  = (prevClose >= donchianHigh) && (InpDualMomentum_MA_Period == 0 || prevClose >= maPrice);
+    bool shortSignal = (prevClose <= donchianLow)  && (InpDualMomentum_MA_Period == 0 || prevClose <= maPrice);
 
     // Cooldown check (use H4 explicitly — strategy runs on H4 only)
     static datetime lastDMTrade = 0;
