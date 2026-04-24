@@ -1,0 +1,240 @@
+================================================================================
+PROJECT: DESTROYER QUANTUM EA — STRATEGY DEVELOPMENT AUDITION
+================================================================================
+
+You are being evaluated as a strategy developer for the Destroyer Quantum EA,
+a multi-strategy algorithmic trading system for EURUSD on MT4 (MQL4). Multiple
+AI agents are working on this project in parallel. Only the best-performing
+strategies will be selected. Think of this as an audition — show what you can
+do, but more importantly, prove it before you build it.
+
+================================================================================
+1. THE SYSTEM (DESTROYER QUANTUM)
+================================================================================
+
+The Destroyer Quantum is a 515KB, 12,200-line MQL4 Expert Advisor running on
+EURUSD H4 timeframe. It uses a "Beehive Architecture":
+
+- QUEEN BEE (Risk Manager): Controls drawdown, high watermark tracking,
+  portfolio VaR, dynamic lot sizing, strategy cooldown, correlation monitoring.
+- WORKER STRATEGIES: Independent signal generators that request trade approval
+  from the Queen Bee before executing.
+
+CURRENT ACTIVE STRATEGIES (V27 baseline):
+  [0] Mean Reversion    — magic 777001 — PF ~1.18 (marginal)
+  [2] Titan H4          — magic 777008 — PF ~1.99 (solid)
+  [3] Warden            — magic 777009 — PF 2.87 (BEST — DO NOT TOUCH)
+  [4] Reaper (Grid)     — magic 888001/888002 — high WR but inflated (grid)
+  [5] Silicon-X (Grid)  — magic 984651 — high WR but inflated (grid)
+DISABLED:
+  [6] Chronos M15       — magic 999001 — PF 0.29 (chronic loser, disabled)
+
+V27 BACKTEST RESULTS (EURUSD H4, 6.3 years):
+  - 186 closed trades, PF 2.09, 80.6% WR
+  - $3,759 closed + $9,378 floating = $12,624 true (126% return)
+  - Max DD: 14.39%
+  - 121 open grid positions at test end
+
+IMPORTANT CONTEXT:
+  - Grid strategies (Reaper, Silicon-X) inflate the win rate because each
+    partial close counts as a win. The REAL quality comes from Warden (PF 2.87)
+    and Titan (PF ~2.0). Mean Reversion barely breaks even.
+  - Chronos was a disaster (PF 0.29). Any scalper on M15 needs extreme
+    selectivity to survive.
+  - V27 = V26 with only 2 changes: Chronos disabled, CountOpenTrades bug fixed.
+
+================================================================================
+2. PERFORMANCE TARGETS
+================================================================================
+
+The competition benchmark:
+  - 1,000+ trades over the test period (~6.3 years)
+  - Profit Factor: 3.0+
+  - Max Drawdown: <10%
+  - Win Rate: >75%
+
+REALISTIC EXPECTATIONS (based on real EURUSD data analysis of 10,877 H1 bars):
+  - Standard indicator strategies: ceiling ~65% WR, PF 2.3-2.5
+  - 75% WR + PF 3.0 simultaneously is NOT achievable with standard indicators
+  - Realistic targets: 65% WR + PF 2.5 OR 70% WR + PF 2.0
+  - High selectivity (fewer, higher-quality trades) > high frequency
+  - The user (Ryan) values SELECTIVITY over FREQUENCY. Quality > quantity.
+
+================================================================================
+3. RESEARCH PAPERS PROVIDED
+================================================================================
+
+You have access to 4 SSRN research papers:
+
+PAPER 1: "151 Trading Strategies" (SSRN-3247865) — 361 pages
+  Authors: Zura Kakushadze & Juan Serur (2018)
+  Content: 150+ strategies across all asset classes with 550+ math formulas.
+  Forex-relevant strategies identified:
+    - Donchian Channel Breakout (price level breakouts, Turtle Trader legacy)
+    - Carry Trade (UIRP-based, interest rate differentials)
+    - Dual Momentum (relative + absolute momentum)
+    - KNN Machine Learning (pattern recognition for signal generation)
+    - Volatility strategies (Bollinger Band-based)
+  KEY TAKEAWAY: The math is sound. The Donchian Breakout is proven by decades
+  of Turtle Trader history. The KNN approach is worth exploring for EURUSD.
+
+PAPER 2: "Intraday Trading Bot for Forex Using Python" (SSRN-4492355) — 6 pages
+  Authors: Nigam, Kumar, Lahoti et al. (Indian university)
+  Content: Intraday forex bot using multi-indicator confirmation.
+  KEY TAKEAWAY: Multi-indicator confirmation (RSI + MACD + Moving Averages)
+  on M15/H1 timeframes is validated academically. Supports combining signals.
+
+PAPER 3: "Algorithmic Trading Using Continuous Action Space Deep RL"
+  (SSRN-4276310) — 26 pages
+  Authors: Majidia, Shamsi, Marvasti — Sharif University
+  Content: Twin-Delayed DDPG (TD3) for trading with continuous position sizing.
+  Tested on Amazon stock and Bitcoin.
+  KEY TAKEAWAY: Q-learning framework for adaptive strategy selection. The EA
+  could learn WHICH strategy to deploy based on market state (trending vs
+  ranging). Formula: Q*(s,a) = Σ P(s',r|s,a) [r + γ max_a' Q*(s',a')]
+
+PAPER 4: "Algorithmic Trading and Its Implications on Capital Markets"
+  (SSRN-2884777) — 14 pages
+  Author: Sriram Kannan (2014)
+  Content: Overview of algo trading categories, market impact, tech architecture.
+  KEY TAKEAWAY: Background context only. No actionable strategies.
+
+================================================================================
+4. EURUSD LABELED DATA
+================================================================================
+
+You have access to pre-processed EURUSD data:
+  - Training: 9,322 samples
+  - Validation: 1,555 samples
+  - 18 feature columns (normalized OHLCV-derived indicators)
+  - Label column (last col): -1 (sell), 0 (hold), 1 (buy)
+  - Label distribution: -1=18.2%, 0=64.6%, 1=17.2%
+  - Python analysis ceiling: 65% WR, PF 2.3 with standard ML
+
+================================================================================
+5. MANDATORY DEVELOPMENT PROTOCOL
+================================================================================
+
+You MUST follow this protocol. No exceptions.
+
+PHASE 1 — RESEARCH & HYPOTHESIS (REQUIRED FIRST)
+  Before writing ANY code:
+  [ ] Identify the specific market inefficiency your strategy exploits
+  [ ] Show mathematical proof: WR × RR combination achieving target PF
+  [ ] Estimate trade frequency with reasoning (not a guess)
+  [ ] Identify which market regime this works in (trending/ranging/volatile)
+  [ ] Explain in one paragraph a non-trader could understand
+  [ ] OUTPUT: Written hypothesis document
+
+PHASE 2 — PYTHON VALIDATION (REQUIRED)
+  [ ] Implement strategy logic in Python (vectorized, numpy)
+  [ ] Test on at least 3 different market periods
+  [ ] Must achieve: PF > 2.0, WR > 60%, trades > estimated/2
+  [ ] If results fail: go back to Phase 1, do NOT proceed
+  [ ] OUTPUT: Python backtest script with results
+
+PHASE 3 — MQL4 IMPLEMENTATION (ONLY AFTER APPROVAL)
+  [ ] Modify the EXISTING Destroyer architecture (do NOT rewrite)
+  [ ] Add new strategy as new function + unique magic number
+  [ ] Update: IsOurMagicNumber(), CountOpenTrades(), GetStrategyIndexFromMagic()
+  [ ] Update: g_perfData, V23_RegisterStrategy, OnNewBar()
+  [ ] Verify: function defined, no array bounds issues, all loops use [8]
+  [ ] OUTPUT: Modified EA file with version bump
+
+PHASE 4 — VALIDATION
+  [ ] Compare MT4 backtest to Python predictions (within 30%)
+  [ ] Document: actual trades, WR, PF, DD vs predictions
+
+================================================================================
+6. CRITICAL RULES
+================================================================================
+
+RULE 1: NEVER TOUCH WARDEN. It's proven (PF 2.87). Don't modify its code,
+  parameters, or behavior. It stays exactly as is.
+
+RULE 2: ONE STRATEGY PER VERSION. Test it. Measure it. Then add another.
+
+RULE 3: NEVER REWRITE FROM SCRATCH. Always modify the existing V27 source.
+  The EA is 12,200 lines of battle-tested architecture. Don't throw it away.
+
+RULE 4: EVERY STRATEGY MUST HAVE MATH. No hand-waving. Show the expected
+  win rate with justification. Show the risk-reward math. Show why it works
+  on EURUSD H4 specifically.
+
+RULE 5: BE HONEST ABOUT RESULTS. If a strategy fails in backtesting, say so.
+  Don't explain away poor results. Accept the data and adjust.
+
+RULE 6: TRACK YOUR PROMISES. If you say "this will get 150 trades at PF 2.3,"
+  document it. If it doesn't deliver, explain why.
+
+================================================================================
+7. MQL4 TECHNICAL REQUIREMENTS
+================================================================================
+
+- MQL4 does NOT support forward declarations (function must be defined before call)
+- Array initialization with input variables fails ("constant expression required")
+- CountOpenTrades() MUST track ALL magic numbers (V26 bug: only tracked 3 of 7)
+- g_perfData array is [8], all iteration loops must use i < 8
+- All 2D arrays (m_correlationMatrix, m_correlations) are [8][8]
+- strategyCooldown array is [8]
+- Magic number map:
+    777001 = Mean Reversion (index 0)
+    777008 = Titan (index 2)
+    777009 = Warden (index 3)
+    888001/888002 = Reaper Buy/Sell (index 4)
+    984651 = Silicon-X (index 5)
+    999001 = Chronos (index 6, DISABLED)
+    777011 = Donchian (index 7, if added)
+
+================================================================================
+8. FAILURE PATTERNS TO AVOID
+================================================================================
+
+❌ Coding before proving — writing functions before showing math
+❌ Adding multiple strategies at once
+❌ Skipping Python validation — going straight to MQL4
+❌ Touching Warden — any modification to its code
+❌ Throwing away the architecture — building a new EA from scratch
+❌ Making vague promises — "results soon" without specifics
+❌ Ignoring real results — explaining away poor backtest data
+❌ Array out of bounds — forgetting to expand [7] to [8]
+❌ Forward declarations — calling function before its definition
+❌ Grid strategy inflation — counting partial closes as wins
+
+================================================================================
+9. YOUR TASK
+================================================================================
+
+Your job is to propose, research, validate, and (if approved) implement ONE
+new strategy for the Destroyer Quantum EA. You are being compared against
+other AI agents working in parallel.
+
+STEP 1: Read the V27 source code and understand the architecture.
+STEP 2: Read the SSRN papers and extract actionable strategies.
+STEP 3: Propose ONE strategy with full Phase 1 hypothesis (math proof).
+STEP 4: Implement in Python and validate on real data.
+STEP 5: If PF > 2.0 in Python, propose the MQL4 implementation plan.
+
+DELIVERABLES EXPECTED:
+  - Phase 1 hypothesis document (written, with math)
+  - Python backtest code with results
+  - MQL4 implementation plan (if Phase 2 passes)
+  - Honest assessment of what works and what doesn't
+
+WHAT MAKES A WINNING SUBMISSION:
+  - Deep understanding of WHY the strategy works (not just THAT it works)
+  - Rigorous math proving the edge is real
+  - Clean, well-documented code
+  - Honest, data-driven assessment
+  - Respect for the existing architecture
+
+Remember: Ryan's Warden strategy (PF 2.87) was built by a human trader.
+It outperforms everything AI has added so far. Your job is to match or
+beat that quality. If you can't, say so — that's more valuable than
+shipping something that doesn't work.
+
+Good luck. Show me what you've got.
+
+================================================================================
+END OF PROMPT
+================================================================================
