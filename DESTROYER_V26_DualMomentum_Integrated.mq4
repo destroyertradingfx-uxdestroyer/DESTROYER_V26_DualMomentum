@@ -1209,6 +1209,7 @@ extern double InpMBD_TP_Mult         = 3.0;          // Take profit multiplier (
 extern int    InpMBD_Cooldown        = 3;            // Bar cooldown
 extern bool   InpMBD_Allow_Defensive = true;         // Trade in defensive hive state
 extern int    InpMBD_MagicNumber     = 999101;       // Worker magic
+extern double InpMBD_MaxSpread       = 3.0;         // Maximum spread (pips)
 
 // SESSION ROTATION ALPHA (SRA)
 extern bool   InpSRA_Enabled          = true;         // Enable SRA worker
@@ -1239,7 +1240,6 @@ extern double InpSMAD_MaxSpread       = 3.0;         // Maximum spread (pips)
 extern int    InpSMAD_Cooldown        = 3;           // Bar cooldown
 extern bool   InpSMAD_Allow_Defensive = true;        // Allow in defensive mode
 extern int    InpSMAD_MagicNumber     = 999103;      // Worker magic
- (Donchian20 + MA200)
 extern string InpSX_OrdersComment           = "Hubble";       // Comment for Silicon-X orders.
 extern int    InpSX_TimerInterval           = 2;            // Processing interval in seconds to reduce CPU load.
 //--- V15.5: OVERLORD - Basket Management System
@@ -12523,7 +12523,7 @@ void ExecuteMomentumBurstDetector()
    double bb_lower = bb_mid - (InpMBD_BB_Dev * bb_std);
    double rsi = iRSI(NULL, PERIOD_H4, InpMBD_RSI_Period, PRICE_CLOSE, 1);
    double stoch_k = iStochastic(NULL, PERIOD_H4, InpMBD_Stoch_Period, 3, 3, MODE_SMA, STO_LOWHIGH, MODE_MAIN, 1);
-   double adx = iADX(NULL, PERIOD_H4, 14, PRICE_CLOSE, 1).adx;
+   double adx = iADX(NULL, PERIOD_H4, 14, PRICE_CLOSE, 1);
    double atr = iATR(NULL, PERIOD_H4, 14, 1);
 
    // Volume filter — DISABLED for forex H4
@@ -12568,6 +12568,15 @@ void ExecuteMomentumBurstDetector()
 //| Session-adaptive: Asia fade + London/NY trend continuation      |
 //| Magic: 999102 | Index: 8                                        |
 //+------------------------------------------------------------------+
+ENUM_FOREX_SESSION
+{
+    SESSION_ASIA,
+    SESSION_LONDON,
+    SESSION_NY,
+    SESSION_OVERLAP,
+    SESSION_OTHER
+};
+
 ENUM_FOREX_SESSION SRA_GetCurrentSession()
 {
    int hour = TimeHour(TimeCurrent()); // broker-local hour
@@ -12593,7 +12602,7 @@ void ExecuteSessionRotationAlpha()
    ENUM_FOREX_SESSION session = SRA_GetCurrentSession();
 
    double rsi = iRSI(NULL, PERIOD_H4, 14, PRICE_CLOSE, 1);
-   double adx = iADX(NULL, PERIOD_H4, 14, PRICE_CLOSE, 1).adx;
+   double adx = iADX(NULL, PERIOD_H4, 14, PRICE_CLOSE, 1);
    double atr = iATR(NULL, PERIOD_H4, 14, 1);
 
    // Bollinger Bands with session-specific deviation
