@@ -1122,7 +1122,7 @@ extern int    InpWarden_Momentum_MA    = 50; // Momentum filter MA period
 
 //--- Cerberus Model Q: Dual-Momentum Breakout (V26.1) ---
 sinput string Inp_Header_DualMomentum = "====== DUAL-MOMENTUM BREAKOUT (Donchian20+MA200) ======";
-extern bool   InpDualMomentum_Enabled     = true;        // V26.1: Enable Dual-Momentum Breakout worker
+extern bool   InpDualMomentum_Enabled     = false;        // V26.1: Enable Dual-Momentum Breakout worker (DISABLED — failed audition)
 extern int    InpDualMomentum_DonchianLen  = 20;           // Donchian Channel lookback period
 extern int    InpDualMomentum_MA_Period    = 0;          // Absolute momentum MA filter (0 = disabled)
 extern int    InpDualMomentum_ATR_Period   = 14;           // ATR period for stops
@@ -5948,10 +5948,13 @@ void ExecuteMathReversal()
 
 void ExecuteDualMomentumBreakout()
 {
-   // V26.1: DUAL-MOMENTUM BREAKOUT WORKER
-   // Donchian 20 breakout + MA200 absolute momentum filter + ATR RR
-   if(Period() != PERIOD_H4) return;
-   if(!InpDualMomentum_Enabled) return;
+// V26.1: DUAL-MOMENTUM BREAKOUT WORKER
+// Donchian 20 breakout + MA200 absolute momentum filter + ATR RR
+// DISCONTINUED: Failed live audition (2020–2026). PF 0.67 over 8 trades.
+// Python validation on 2023–2026 showed PF 3.50 but failed to generalize.
+// Strategy disabled by default. Do NOT enable — remove for production.
+if(Period() != PERIOD_H4) return;
+if(!InpDualMomentum_Enabled) return;
     // -------------------------------------------------------------------------
     // HEALTH CHECK BYPASS FOR BREAKOUT STRATEGY
     // -------------------------------------------------------------------------
