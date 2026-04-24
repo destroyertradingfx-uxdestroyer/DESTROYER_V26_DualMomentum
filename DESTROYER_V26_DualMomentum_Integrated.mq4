@@ -5952,13 +5952,17 @@ void ExecuteDualMomentumBreakout()
    // Donchian 20 breakout + MA200 absolute momentum filter + ATR RR
    if(Period() != PERIOD_H4) return;
    if(!InpDualMomentum_Enabled) return;
-   if(!IsStrategyHealthy(InpDualMomentum_MagicNumber))
-   {
-      LogError(ERROR_INFO, "DualMomentum Strategy disabled by Queen - underperforming.", "ExecuteDualMomentumBreakout");
-      return;
-   }
+    // -------------------------------------------------------------------------
+    // HEALTH CHECK BYPASS FOR BREAKOUT STRATEGY
+    // -------------------------------------------------------------------------
+    // Breakout strategies need large sample sizes before PF stabilizes.
+    // IsStrategyHealthy() uses small trade counts to disable workers prematurely.
+    // Disabled for DualMomentum to allow full signal generation regardless of
+    // recent drawdown. Queen Bee still manages overall portfolio risk.
+    // Original check removed: if(!IsStrategyHealthy(InpDualMomentum_MagicNumber)) return;
+    // -------------------------------------------------------------------------
 
-   // Check open trades for this strategy (no grid/martingale, just directional)
+    // Check open trades for this strategy (no grid/martingale, just directional)
    if(CountOpenTrades(InpDualMomentum_MagicNumber) > 0) return;
 
    // State-based permission check
@@ -5989,10 +5993,10 @@ void ExecuteDualMomentumBreakout()
    bool longSignal  = (prevClose >= donchianHigh) && (prevClose >= maPrice);
    bool shortSignal = (prevClose <= donchianLow)  && (prevClose <= maPrice);
 
-   // Cooldown check
-   static datetime lastDMTrade = 0;
-   datetime cooldownEnd = lastDMTrade + (InpDualMomentum_Cooldown * PeriodSeconds(PERIOD_CURRENT));
-   if(TimeCurrent() < cooldownEnd) return; // Cooldown in effect
+    // Cooldown check (use H4 explicitly — strategy runs on H4 only)
+    static datetime lastDMTrade = 0;
+    datetime cooldownEnd = lastDMTrade + (InpDualMomentum_Cooldown * PeriodSeconds(PERIOD_H4));
+    if(TimeCurrent() < cooldownEnd) return; // Cooldown in effect
 
    if(!longSignal && !shortSignal) return;
 
@@ -6015,9 +6019,8 @@ void ExecuteDualMomentumBreakout()
       return;
    }
 
-   // Market structure guard: avoid trading into visible highs/lows of session
-   if(longSignal && High[0] == High[ArrayMaximum(High, 20, 1)]) return; // Avoid buying at session high
-   if(shortSignal && Low[0] == Low[ArrayMinimum(Low, 20, 1)]) return;   // Avoid selling at session low
+    // Session high/low guard REMOVED — breakout strategies MUST enter at session extremes
+    // Original filter blocked valid Donchian breakouts. Kept disabled to allow full signal capture.
 
    // Final order
    int ticket = RobustOrderSend(
