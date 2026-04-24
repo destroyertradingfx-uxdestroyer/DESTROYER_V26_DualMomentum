@@ -6050,77 +6050,77 @@ void ExecuteDualMomentumBreakout()
 
 void ExecuteMicrostructureStrategy()
    {
-      return; // Strategy disabled by user
+      // Strategy temporarily disabled — body preserved for future activation
+      return;
+
+      // 1. TIME CONTROL: Run this check once per M15 Bar (High Frequency)
+      static datetime lastM15Execution = 0;
+      datetime currentM15Time = iTime(Symbol(), PERIOD_M15, 0);
+      if(lastM15Execution == currentM15Time) return; // Already checked this bar
+      lastM15Execution = currentM15Time;
+
+      // 2. SAFETY CHECK: Check strategy health & Hurst (Market Regime)
+      if(!IsStrategyHealthy(InpChronos_MagicNumber)) return; // Use a dedicated Magic Number for stats
+      
+      // --- QUANTUM GATE 1: H4 MACRO TREND BIAS (The Filter) ---
+      // We NEVER scalp against the Kalman Trend of the H4 chart.
+      // This guarantees High Win Rate even on noise timeframes.
+      double h4_Kalman_Curr = KalmanTitan.Update(iClose(Symbol(), PERIOD_H4, 0));
+      double h4_Kalman_Prev = KalmanTitan.Update(iClose(Symbol(), PERIOD_H4, 1));
+      int bias = 0;
+      
+      // Strict Trend Definitions:
+      if(h4_Kalman_Curr > h4_Kalman_Prev && Close[0] > h4_Kalman_Curr) bias = 1; // BULLISH MACRO
+      if(h4_Kalman_Curr < h4_Kalman_Prev && Close[0] < h4_Kalman_Curr) bias = -1; // BEARISH MACRO
+      
+      if(bias == 0) return; // No Macro Trend? No Scalping.
+
+      // --- QUANTUM GATE 2: M15 MICRO STRUCTURE (The Entry) ---
+      // We look for pullbacks AGAINST the trend on M15.
+      // Buying the dip in an uptrend, selling the rally in a downtrend.
+      
+      // Ensure Arrays are filled
+      if(ArraySize(m15Close) < 20) return;
+      
+      // Calculate M15 Technicals on the Array
+      double m15_RSI = iRSIOnArray(m15Close, 14, 1);
+      double m15_BB_Lower = CustomBBOnArray(m15Close, 0, 20, 2.0, 0, MODE_LOWER, 1);
+      double m15_BB_Upper = CustomBBOnArray(m15Close, 0, 20, 2.0, 0, MODE_UPPER, 1);
+      
+      bool buy_scalp  = (bias == 1)  && (m15Close[1] < m15_BB_Lower) && (m15_RSI < 30);
+      bool sell_scalp = (bias == -1) && (m15Close[1] > m15_BB_Upper) && (m15_RSI > 70);
+
+      // --- EXECUTION BLOCK ---
+      if(buy_scalp || sell_scalp)
+      {
+          // Convert pips to points (some brokers use 5-digit pricing)
+          double scalp_sl_points = InpChronos_ScalpSL_Pips * 10; // Convert pips to points
+          double scalp_tp_points = InpChronos_ScalpTP_Pips * 10; // Convert pips to points
+          
+          int magic_micro = InpChronos_MagicNumber; // Unique Magic for Microstructure
+          int opType = buy_scalp ? OP_BUY : OP_SELL;
+          double price = buy_scalp ? Ask : Bid;
+          
+          double sl = buy_scalp ? price - scalp_sl_points*Point : price + scalp_sl_points*Point;
+          double tp = buy_scalp ? price + scalp_tp_points*Point : price - scalp_tp_points*Point;
+          
+          // Lot Sizing: Use Kelly Fraction but scaled down for frequency
+          double baseLots = MoneyManagement_Quantum(magic_micro, InpBase_Risk_Percent) * InpChronos_LotSizeMultiplier;
+          
+          if(baseLots > 0)
+          {
+              int ticket = OpenTrade(opType, baseLots, price, sl, tp, "MICRO_SCALP_M15", magic_micro);
+              if(ticket > 0)
+              {
+                  // Force update stats so it shows in dashboard immediately
+                  UpdatePerformanceV4(magic_micro, 0);
+                  LogError(ERROR_INFO, "CHRONOS M15 SCALPER: " + (buy_scalp ? "BUY" : "SELL") + 
+                          " Scalp #" + IntegerToString(ticket) + " | H4_Bias=" + IntegerToString(bias) + 
+                          " | M15_RSI=" + DoubleToString(m15_RSI, 1), "ExecuteMicrostructureStrategy");
+              }
+          }
+      }
    }
-   
-   // 1. TIME CONTROL: Run this check once per M15 Bar (High Frequency)
-   static datetime lastM15Execution = 0;
-   datetime currentM15Time = iTime(Symbol(), PERIOD_M15, 0);
-   if(lastM15Execution == currentM15Time) return; // Already checked this bar
-   lastM15Execution = currentM15Time;
-
-   // 2. SAFETY CHECK: Check strategy health & Hurst (Market Regime)
-   if(!IsStrategyHealthy(InpChronos_MagicNumber)) return; // Use a dedicated Magic Number for stats
-   
-   // --- QUANTUM GATE 1: H4 MACRO TREND BIAS (The Filter) ---
-   // We NEVER scalp against the Kalman Trend of the H4 chart.
-   // This guarantees High Win Rate even on noise timeframes.
-   double h4_Kalman_Curr = KalmanTitan.Update(iClose(Symbol(), PERIOD_H4, 0));
-   double h4_Kalman_Prev = KalmanTitan.Update(iClose(Symbol(), PERIOD_H4, 1));
-   int bias = 0;
-   
-   // Strict Trend Definitions:
-   if(h4_Kalman_Curr > h4_Kalman_Prev && Close[0] > h4_Kalman_Curr) bias = 1; // BULLISH MACRO
-   if(h4_Kalman_Curr < h4_Kalman_Prev && Close[0] < h4_Kalman_Curr) bias = -1; // BEARISH MACRO
-   
-   if(bias == 0) return; // No Macro Trend? No Scalping.
-
-   // --- QUANTUM GATE 2: M15 MICRO STRUCTURE (The Entry) ---
-   // We look for pullbacks AGAINST the trend on M15.
-   // Buying the dip in an uptrend, selling the rally in a downtrend.
-   
-   // Ensure Arrays are filled
-   if(ArraySize(m15Close) < 20) return;
-   
-   // Calculate M15 Technicals on the Array
-   double m15_RSI = iRSIOnArray(m15Close, 14, 1);
-   double m15_BB_Lower = CustomBBOnArray(m15Close, 0, 20, 2.0, 0, MODE_LOWER, 1);
-   double m15_BB_Upper = CustomBBOnArray(m15Close, 0, 20, 2.0, 0, MODE_UPPER, 1);
-   
-   bool buy_scalp  = (bias == 1)  && (m15Close[1] < m15_BB_Lower) && (m15_RSI < 30);
-   bool sell_scalp = (bias == -1) && (m15Close[1] > m15_BB_Upper) && (m15_RSI > 70);
-
-   // --- EXECUTION BLOCK ---
-   if(buy_scalp || sell_scalp)
-   {
-       // Convert pips to points (some brokers use 5-digit pricing)
-       double scalp_sl_points = InpChronos_ScalpSL_Pips * 10; // Convert pips to points
-       double scalp_tp_points = InpChronos_ScalpTP_Pips * 10; // Convert pips to points
-       
-       int magic_micro = InpChronos_MagicNumber; // Unique Magic for Microstructure
-       int opType = buy_scalp ? OP_BUY : OP_SELL;
-       double price = buy_scalp ? Ask : Bid;
-       
-       double sl = buy_scalp ? price - scalp_sl_points*Point : price + scalp_sl_points*Point;
-       double tp = buy_scalp ? price + scalp_tp_points*Point : price - scalp_tp_points*Point;
-       
-       // Lot Sizing: Use Kelly Fraction but scaled down for frequency
-       double baseLots = MoneyManagement_Quantum(magic_micro, InpBase_Risk_Percent) * InpChronos_LotSizeMultiplier;
-       
-       if(baseLots > 0)
-       {
-           int ticket = OpenTrade(opType, baseLots, price, sl, tp, "MICRO_SCALP_M15", magic_micro);
-           if(ticket > 0)
-           {
-               // Force update stats so it shows in dashboard immediately
-               UpdatePerformanceV4(magic_micro, 0);
-               LogError(ERROR_INFO, "CHRONOS M15 SCALPER: " + (buy_scalp ? "BUY" : "SELL") + 
-                       " Scalp #" + IntegerToString(ticket) + " | H4_Bias=" + IntegerToString(bias) + 
-                       " | M15_RSI=" + DoubleToString(m15_RSI, 1), "ExecuteMicrostructureStrategy");
-           }
-       }
-   }
-}
 
 //+------------------------------------------------------------------+
 //| Cerberus Model R: The Reaper (Grid/Martingale Basket Protocol)   |
