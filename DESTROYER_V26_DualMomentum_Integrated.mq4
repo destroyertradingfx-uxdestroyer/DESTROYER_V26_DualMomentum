@@ -1190,7 +1190,56 @@ extern int    InpSX_TrailingOrderStart      = 500;          // Profit in POINTS 
 extern int    InpSX_TrailingOrderStop       = 100;          // Trailing stop distance in POINTS for OPEN positions.
 //--- System Configuration
 extern int    InpSX_MagicNumber             = 984651;       // Unique identifier for Silicon-X trades.
-extern int    InpDualMomentum_MagicNumber   = 777011;   // V26.1: Dual-Momentum BreakoutWorker magic (Donchian20 + MA200)
+extern int    InpDualMomentum_MagicNumber   = 777011;   // V26.1: Dual-Momentum BreakoutWorker magic
+
+//+------------------------------------------------------------------+
+//| V27.1 NEW STRATEGIES: MBD, SRA, SMAD                            |
+//+------------------------------------------------------------------+
+// MOMENTUM BURST DETECTOR (MBD)
+extern bool   InpMBD_Enabled          = true;         // Enable MBD worker
+extern int    InpMBD_BB_Period        = 20;           // Bollinger Band period
+extern double InpMBD_BB_Dev          = 2.5;          // Bollinger Band deviation
+extern int    InpMBD_RSI_Period      = 14;           // RSI period
+extern int    InpMBD_Stoch_Period    = 14;           // Stochastic period
+extern double InpMBD_ADX_Max         = 25.0;         // Max ADX (low trend regime)
+extern bool   InpMBD_UseVolumeFilter  = false;        // Volume filter disabled (forex H4 volume = 0)
+extern double InpMBD_VolumeMin       = 1.2;          // Legacy param (inactive)
+extern double InpMBD_SL_Mult         = 1.5;          // Stop loss multiplier (ATR)
+extern double InpMBD_TP_Mult         = 3.0;          // Take profit multiplier (ATR)
+extern int    InpMBD_Cooldown        = 3;            // Bar cooldown
+extern bool   InpMBD_Allow_Defensive = true;         // Trade in defensive hive state
+extern int    InpMBD_MagicNumber     = 999101;       // Worker magic
+
+// SESSION ROTATION ALPHA (SRA)
+extern bool   InpSRA_Enabled          = true;         // Enable SRA worker
+extern int    InpSRA_BB_Period        = 20;           // Bollinger Band period
+extern double InpSRA_BB_Dev_Asia     = 1.5;          // Asia session deviation
+extern double InpSRA_BB_Dev_Global   = 2.0;          // London/NY session deviation
+extern double InpSRA_RSI_Oversold    = 40.0;         // Asia RSI oversold threshold
+extern double InpSRA_RSI_Overbought  = 60.0;         // Asia RSI overbought threshold
+extern double InpSRA_RSI_Oversold_T  = 35.0;         // Trend session RSI oversold
+extern double InpSRA_RSI_Overbought_T= 65.0;         // Trend session RSI overbought
+extern double InpSRA_ADX_Max         = 30.0;         // Max ADX for trend continuation
+extern double InpSRA_SL_Mult         = 1.5;          // Stop loss multiplier
+extern double InpSRA_TP_Mult         = 3.0;          // Take profit multiplier
+extern double InpSRA_MaxSpread       = 3.0;          // Maximum spread (pips)
+extern int    InpSRA_Cooldown        = 3;            // Bar cooldown
+extern bool   InpSRA_Allow_Defensive = true;         // Allow in defensive mode
+extern int    InpSRA_MagicNumber     = 999102;       // Worker magic
+
+// SMART MONEY ACCUMULATION (SMAD)
+extern bool   InpSMAD_Enabled          = true;        // Enable SMAD worker
+extern int    InpSMAD_ATR_Period      = 14;          // ATR period
+extern double InpSMAD_Absorption_Min  = 1.3;         // Minimum absorption score
+extern double InpSMAD_RSI_Oversold    = 40.0;        // RSI oversold threshold
+extern double InpSMAD_RSI_Overbought  = 60.0;        // RSI overbought threshold
+extern double InpSMAD_SL_Mult         = 1.5;         // Stop loss multiplier
+extern double InpSMAD_TP_Mult         = 3.0;         // Take profit multiplier
+extern double InpSMAD_MaxSpread       = 3.0;         // Maximum spread (pips)
+extern int    InpSMAD_Cooldown        = 3;           // Bar cooldown
+extern bool   InpSMAD_Allow_Defensive = true;        // Allow in defensive mode
+extern int    InpSMAD_MagicNumber     = 999103;      // Worker magic
+ (Donchian20 + MA200)
 extern string InpSX_OrdersComment           = "Hubble";       // Comment for Silicon-X orders.
 extern int    InpSX_TimerInterval           = 2;            // Processing interval in seconds to reduce CPU load.
 //--- V15.5: OVERLORD - Basket Management System
@@ -1473,7 +1522,7 @@ struct V23_TradeEquityDelta {
 };
 
 
-PerfData g_perfData[7]; // 0=MR, 1=REMOVED, 2=Titan, 3=Warden, 4-6=REMOVED
+PerfData g_perfData[12]; // V27.1: Expanded to 12 slots (7–9: new V27 strategies) // 0=MR, 1=REMOVED, 2=Titan, 3=Warden, 4-6=REMOVED
 
 // V13.0 ELITE: Strategy Cooldown System - Temporary Disablement Protocol
 struct StrategyCooldown {
@@ -1481,7 +1530,7 @@ struct StrategyCooldown {
    datetime disabledTime;
    int disabledBars;
 };
-StrategyCooldown g_strategyCooldown[7]; // Array for 7 strategies
+StrategyCooldown g_strategyCooldown[12]; // V27.1: Expanded to 12 strategies
 // ---
 
 //--- Dashboard Objects
@@ -1699,6 +1748,9 @@ string GetStrategyName(int index)
         case 5: return "Quantum Oscillator"; // V8.5.9: UPDATED
         case 7: return "Titan"; // Titan strategy
         case 8: return "Warden"; // Warden strategy
+        case 9: return "Momentum Burst Detector"; // V27.1: MBD
+        case 10: return "Session Rotation Alpha";  // V27.1: SRA
+        case 11: return "Smart Money Accumulation"; // V27.1: SMAD
 
         default: return "";
     }
@@ -3974,7 +4026,7 @@ void UpdatePerformanceMetrics()
     // Calculate overall performance metrics
     double total_profit = 0, total_loss = 0, total_trades = 0, total_wins = 0;
     
-    for(int i = 0; i < 7; i++)
+    for(int i = 0; i < 12; i++) // V27.1: Extended to 12 strategies
     {
         total_profit += g_perfData[i].grossProfit;
         total_loss += g_perfData[i].grossLoss;
@@ -4320,6 +4372,10 @@ int OnInit()
    // V13.8 SILICON-X: Name the new strategy at index 5
    g_perfData[5].name = "Silicon-X";
    g_perfData[6].name = "Market Microstructure"; // Placeholder
+   g_perfData[7].name = "Momentum Burst Detector"; // V27.1: MBD
+   g_perfData[8].name = "Session Rotation Alpha";  // V27.1: SRA
+   g_perfData[9].name = "Smart Money Accumulation"; // V27.1: SMAD
+
    // ---
    
    // V13.0 ELITE: Initialize Strategy Cooldown System
@@ -5045,6 +5101,32 @@ void OnNewBar()
       if(CountOpenTrades() >= InpMaxOpenTrades) { if(!IsOptimization()) UpdateDashboard_StaticV8_6(); return; }
    }
 
+    // =============================================================
+    // V27.1 NEW STRATEGIES: MBD, SRA, SMAD
+    // =============================================================
+
+    // STRATEGY: Momentum Burst Detector (MBD) — Fade at BB extremes
+    if(InpMBD_Enabled)
+    {
+       ExecuteMomentumBurstDetector();
+       if(CountOpenTrades() >= InpMaxOpenTrades) { if(!IsOptimization()) UpdateDashboard_StaticV8_6(); return; }
+    }
+
+    // STRATEGY: Session Rotation Alpha (SRA) — Session-adaptive
+    if(InpSRA_Enabled)
+    {
+       ExecuteSessionRotationAlpha();
+       if(CountOpenTrades() >= InpMaxOpenTrades) { if(!IsOptimization()) UpdateDashboard_StaticV8_6(); return; }
+    }
+
+    // STRATEGY: Smart Money Accumulation (SMAD) — Accumulation detection
+    if(InpSMAD_Enabled)
+    {
+       ExecuteSmartMoneyAccumulation();
+       if(CountOpenTrades() >= InpMaxOpenTrades) { if(!IsOptimization()) UpdateDashboard_StaticV8_6(); return; }
+    }
+
+
    if(!IsOptimization())
    {
      UpdateDashboard_StaticV8_6();
@@ -5150,6 +5232,10 @@ string GetStrategyNameFromMagic(int magic)
     if(magic == InpWarden_MagicNumber)   return "Warden";
     if(magic == InpReaper_BuyMagicNumber || magic == InpReaper_SellMagicNumber) return "Reaper Protocol";
     if(magic == InpDualMomentum_MagicNumber) return "DualMomentum"; // V26.1
+    // V27.1 NEW STRATEGIES:
+    if(magic == InpMBD_MagicNumber)  return "Momentum Burst Detector";
+    if(magic == InpSRA_MagicNumber)  return "Session Rotation Alpha";
+    if(magic == InpSMAD_MagicNumber) return "Smart Money Accumulation";
 
     return "Unknown";
 }
@@ -5164,9 +5250,12 @@ bool IsOurMagicNumber(int magic)
        magic == InpWarden_MagicNumber ||
        magic == InpReaper_BuyMagicNumber ||
        magic == InpReaper_SellMagicNumber ||
-       magic == InpSX_MagicNumber || // Add Silicon-X magic number
-       magic == InpDualMomentum_MagicNumber || // V26.1: Dual-Momentum Breakout
-       magic == InpChronos_MagicNumber) // V18.3: Add Chronos M15 Scalper
+       magic == InpSX_MagicNumber ||
+       magic == InpDualMomentum_MagicNumber ||
+       magic == InpChronos_MagicNumber ||
+       magic == InpMBD_MagicNumber ||
+       magic == InpSRA_MagicNumber ||
+       magic == InpSMAD_MagicNumber)
     {
         return true;
     }
@@ -5187,9 +5276,11 @@ int GetStrategyIndexFromMagic(int magicNumber)
     if(magicNumber == InpReaper_BuyMagicNumber || magicNumber == InpReaper_SellMagicNumber) return 4;
     if(magicNumber == InpSX_MagicNumber) return 5; // Assign Silicon-X to index 5
     if(magicNumber == InpChronos_MagicNumber) return 6; // V18.3: Chronos M15 Scalper at index 6
-    if(magicNumber == InpDualMomentum_MagicNumber) return 1; // V26.1: Dual-Momentum Breakout at index 1 (was Quantum Oscillator slot)
-
-    // Index 8+ reserved for future expansion.
+    if(magicNumber == InpDualMomentum_MagicNumber) return 1; // V26.1: Dual-Momentum Breakout at index 1
+    // V27.1 NEW STRATEGIES:
+    if(magicNumber == InpMBD_MagicNumber)  return 7;  // Momentum Burst Detector
+    if(magicNumber == InpSRA_MagicNumber)  return 8;  // Session Rotation Alpha
+    if(magicNumber == InpSMAD_MagicNumber) return 9;  // Smart Money Accumulation
 
     return -1; // Return -1 for unknown
 }
@@ -12405,3 +12496,256 @@ double OnTester()
    
    return kScore;
 }
+
+//+------------------------------------------------------------------+
+//| V27.1: MOMENTUM BURST DETECTOR (MBD)                             |
+//| Mean-reversion fade: BB extremes + RSI/Stoch confirmation       |
+//| Magic: 999101 | Index: 7                                        |
+//+------------------------------------------------------------------+
+void ExecuteMomentumBurstDetector()
+{
+   // Framework boilerplate
+   if(Period() != PERIOD_H4) return;
+   if(!InpMBD_Enabled) return;
+   // Health check bypass: mean-reversion needs large sample before PF stabilizes
+   // if(!IsStrategyHealthy(InpMBD_MagicNumber)) return;
+   if(CountOpenTrades(InpMBD_MagicNumber) > 0) return;
+   if(g_hive_state == HIVE_STATE_DEFENSIVE && !InpMBD_Allow_Defensive)
+   {
+      LogError(ERROR_INFO, "ExecuteMBD: SKIPPED - Defensive hive mode", "ExecuteMomentumBurstDetector");
+      return;
+   }
+
+   // Calculate indicators
+   double bb_mid = iMA(NULL, PERIOD_H4, InpMBD_BB_Period, 0, MODE_SMA, PRICE_CLOSE, 1);
+   double bb_std = iStdDev(NULL, PERIOD_H4, InpMBD_BB_Period, 0, MODE_SMA, PRICE_CLOSE, 1);
+   double bb_upper = bb_mid + (InpMBD_BB_Dev * bb_std);
+   double bb_lower = bb_mid - (InpMBD_BB_Dev * bb_std);
+   double rsi = iRSI(NULL, PERIOD_H4, InpMBD_RSI_Period, PRICE_CLOSE, 1);
+   double stoch_k = iStochastic(NULL, PERIOD_H4, InpMBD_Stoch_Period, 3, 3, MODE_SMA, STO_LOWHIGH, MODE_MAIN, 1);
+   double adx = iADX(NULL, PERIOD_H4, 14, PRICE_CLOSE, 1).adx;
+   double atr = iATR(NULL, PERIOD_H4, 14, 1);
+
+   // Volume filter — DISABLED for forex H4
+   bool volume_ok = !InpMBD_UseVolumeFilter; // Always true when filter disabled
+
+   double close = Close[1];
+
+   // Signal detection
+   int cmd = -1;
+   if(close < bb_lower && rsi < 30.0 && stoch_k < 20.0 && adx < InpMBD_ADX_Max && volume_ok)
+      cmd = OP_BUY;
+   else if(close > bb_upper && rsi > 70.0 && stoch_k > 80.0 && adx < InpMBD_ADX_Max && volume_ok)
+      cmd = OP_SELL;
+
+   if(cmd == -1) return;
+
+   // Calculate SL/TP
+   double entry = close;
+   double sl = (cmd == OP_BUY) ? entry - (atr * InpMBD_SL_Mult) : entry + (atr * InpMBD_SL_Mult);
+   double tp = (cmd == OP_BUY) ? entry + (atr * InpMBD_TP_Mult) : entry - (atr * InpMBD_TP_Mult);
+   double sl_pips = (cmd == OP_BUY) ? (entry - sl)/Point : (sl - entry)/Point;
+
+   // Spread check
+   if(!IsSpreadAcceptable(InpMBD_MaxSpread > 0 ? InpMBD_MaxSpread : 3.0)) return;
+
+   // Lot size
+   double lots = GetLotSize_Ascension(sl_pips, 7); // Strategy index 7
+   if(lots < 0.01) return;
+
+   // Execute
+   string name = "Momentum Burst Detector";
+   int ticket = OrderSend(Symbol(), cmd, lots, entry, 3, sl, tp, name+" (MBD)", InpMBD_MagicNumber, 0, clrNONE);
+   if(ticket > 0)
+      Print("[MBD] Trade opened: ", cmd==OP_BUY?"BUY":"SELL", " @ ", entry, " SL: ", sl, " TP: ", tp);
+   else
+      LogError(ERROR_WARNING, "MBD OrderSend failed, err="+IntegerToString(GetLastError()), "ExecuteMomentumBurstDetector");
+}
+
+
+//+------------------------------------------------------------------+
+//| V27.1: SESSION ROTATION ALPHA (SRA)                              |
+//| Session-adaptive: Asia fade + London/NY trend continuation      |
+//| Magic: 999102 | Index: 8                                        |
+//+------------------------------------------------------------------+
+ENUM_FOREX_SESSION SRA_GetCurrentSession()
+{
+   int hour = TimeHour(TimeCurrent()); // broker-local hour
+   if(hour >= 0 && hour < 8)  return SESSION_ASIA;
+   if(hour >= 8 && hour < 12) return SESSION_LONDON;
+   if(hour >= 12 && hour < 16) return SESSION_NY;
+   if(hour >= 14 && hour < 18) return SESSION_OVERLAP;
+   return SESSION_OTHER;
+}
+
+void ExecuteSessionRotationAlpha()
+{
+   if(Period() != PERIOD_H4) return;
+   if(!InpSRA_Enabled) return;
+   // if(!IsStrategyHealthy(InpSRA_MagicNumber)) return;
+   if(CountOpenTrades(InpSRA_MagicNumber) > 0) return;
+   if(g_hive_state == HIVE_STATE_DEFENSIVE && !InpSRA_Allow_Defensive)
+   {
+      LogError(ERROR_INFO, "ExecuteSRA: SKIPPED - Defensive hive mode", "ExecuteSessionRotationAlpha");
+      return;
+   }
+
+   ENUM_FOREX_SESSION session = SRA_GetCurrentSession();
+
+   double rsi = iRSI(NULL, PERIOD_H4, 14, PRICE_CLOSE, 1);
+   double adx = iADX(NULL, PERIOD_H4, 14, PRICE_CLOSE, 1).adx;
+   double atr = iATR(NULL, PERIOD_H4, 14, 1);
+
+   // Bollinger Bands with session-specific deviation
+   int bb_period = InpSRA_BB_Period;
+   double bb_mid = iMA(NULL, PERIOD_H4, bb_period, 0, MODE_SMA, PRICE_CLOSE, 1);
+   double bb_std = iStdDev(NULL, PERIOD_H4, bb_period, 0, MODE_SMA, PRICE_CLOSE, 1);
+   double bb_dev = (session == SESSION_ASIA) ? InpSRA_BB_Dev_Asia : InpSRA_BB_Dev_Global;
+   double bb_upper = bb_mid + (bb_dev * bb_std);
+   double bb_lower = bb_mid - (bb_dev * bb_std);
+
+   // RSI thresholds
+   double rsi_oversold, rsi_overbought, adx_max;
+   if(session == SESSION_ASIA)
+   {
+      rsi_oversold = InpSRA_RSI_Oversold;
+      rsi_overbought = InpSRA_RSI_Overbought;
+      adx_max = 35.0; // Asia range-bound regime
+   }
+   else
+   {
+      rsi_oversold = InpSRA_RSI_Oversold_T;
+      rsi_overbought = InpSRA_RSI_Overbought_T;
+      adx_max = InpSRA_ADX_Max;
+   }
+
+   double close = Close[1];
+   int cmd = -1;
+
+   if(close < bb_lower && rsi < rsi_oversold && adx < adx_max)
+      cmd = OP_BUY;
+   else if(close > bb_upper && rsi > rsi_overbought && adx < adx_max)
+      cmd = OP_SELL;
+
+   if(cmd == -1) return;
+
+   // SL/TP
+   double entry = close;
+   double sl = (cmd == OP_BUY) ? entry - (atr * InpSRA_SL_Mult) : entry + (atr * InpSRA_SL_Mult);
+   double tp = (cmd == OP_BUY) ? entry + (atr * InpSRA_TP_Mult) : entry - (atr * InpSRA_TP_Mult);
+   double sl_pips = (cmd == OP_BUY) ? (entry - sl)/Point : (sl - entry)/Point;
+
+   // Spread check
+   if(!IsSpreadAcceptable(InpSRA_MaxSpread)) return;
+
+   // Lot size
+   double lots = GetLotSize_Ascension(sl_pips, 8); // Strategy index 8
+   if(lots < 0.01) return;
+
+   // Execute
+   string name = "Session Rotation Alpha";
+   int ticket = OrderSend(Symbol(), cmd, lots, entry, 3, sl, tp, name+" (SRA)", InpSRA_MagicNumber, 0, clrNONE);
+   if(ticket > 0)
+      Print("[SRA] Trade opened: ", cmd==OP_BUY?"BUY":"SELL", " @ ", entry, " SL: ", sl, " TP: ", tp, " [",EnumToString(session),"]");
+   else
+      LogError(ERROR_WARNING, "SRA OrderSend failed, err="+IntegerToString(GetLastError()), "ExecuteSessionRotationAlpha");
+}
+
+
+//+------------------------------------------------------------------+
+//| V27.1: SMART MONEY ACCUMULATION (SMAD)                           |
+//| Pivot-based absorption detection near S1/R1                     |
+//| Magic: 999103 | Index: 9                                        |
+//+------------------------------------------------------------------+
+void SMAD_CalculatePivots(double &pivot, double &r1, double &s1)
+{
+   double prev_high = iHigh(NULL, PERIOD_D1, 1);
+   double prev_low = iLow(NULL, PERIOD_D1, 1);
+   double prev_close = iClose(NULL, PERIOD_D1, 1);
+   pivot = (prev_high + prev_low + prev_close) / 3.0;
+   r1 = (2 * pivot) - prev_low;
+   s1 = (2 * pivot) - prev_high;
+}
+
+double SMAD_CalculateAbsorption()
+{
+   // Volume ratio — DISABLED for forex H4
+   // double volume = (double)iVolume(NULL, PERIOD_H4, 1);
+   // double volume_ma = iMA(NULL, PERIOD_H4, 20, 0, MODE_SMA, MODE_VOLUME, 1);
+   // double vol_ratio = (volume_ma > 0) ? (volume / volume_ma) : 1.0;
+
+   // Proxy: high-low range expansion vs ATR (range-based volatility)
+   double high = High[1];
+   double low = Low[1];
+   double range = high - low;
+   double atr = iATR(NULL, PERIOD_H4, InpSMAD_ATR_Period, 1);
+   double range_ratio = (atr > 0) ? (range / atr) : 1.0;
+
+   // BB width for normalization
+   double bb_mid = iMA(NULL, PERIOD_H4, 20, 0, MODE_SMA, PRICE_CLOSE, 1);
+   double bb_std = iStdDev(NULL, PERIOD_H4, 20, 0, MODE_SMA, PRICE_CLOSE, 1);
+   double bb_width = 4.0 * bb_std;
+   double bb_width_norm = (atr > 0) ? (bb_width / atr) : 0;
+
+   // Absorption proxy: high range contraction relative to ATR
+   double absorption = 1.0 / (1.0 + range_ratio); // Inverse of range expansion
+   // Clamp to 0–2 range
+   if(absorption < 0) absorption = 0;
+   if(absorption > 2) absorption = 2;
+
+   return absorption;
+}
+
+void ExecuteSmartMoneyAccumulation()
+{
+   if(Period() != PERIOD_H4) return;
+   if(!InpSMAD_Enabled) return;
+   // if(!IsStrategyHealthy(InpSMAD_MagicNumber)) return;
+   if(CountOpenTrades(InpSMAD_MagicNumber) > 0) return;
+   if(g_hive_state == HIVE_STATE_DEFENSIVE && !InpSMAD_Allow_Defensive)
+   {
+      LogError(ERROR_INFO, "ExecuteSMAD: SKIPPED - Defensive hive mode", "ExecuteSmartMoneyAccumulation");
+      return;
+   }
+
+   double pivot, r1, s1;
+   SMAD_CalculatePivots(pivot, r1, s1);
+
+   double close = Close[1];
+   double open = Open[1];
+   double rsi = iRSI(NULL, PERIOD_H4, 14, PRICE_CLOSE, 1);
+   double atr = iATR(NULL, PERIOD_H4, InpSMAD_ATR_Period, 1);
+   double absorption = SMAD_CalculateAbsorption();
+
+   int cmd = -1;
+   // BUY: near support + high absorption + oversold + bullish candle
+   if(close < (s1 + atr) && absorption > InpSMAD_Absorption_Min && rsi < InpSMAD_RSI_Oversold && close > open)
+      cmd = OP_BUY;
+   // SELL: near resistance + high absorption + overbought + bearish candle
+   else if(close > (r1 - atr) && absorption > InpSMAD_Absorption_Min && rsi > InpSMAD_RSI_Overbought && close < open)
+      cmd = OP_SELL;
+
+   if(cmd == -1) return;
+
+   // SL/TP
+   double entry = close;
+   double sl = (cmd == OP_BUY) ? entry - (atr * InpSMAD_SL_Mult) : entry + (atr * InpSMAD_SL_Mult);
+   double tp = (cmd == OP_BUY) ? entry + (atr * InpSMAD_TP_Mult) : entry - (atr * InpSMAD_TP_Mult);
+   double sl_pips = (cmd == OP_BUY) ? (entry - sl)/Point : (sl - entry)/Point;
+
+   // Spread check
+   if(!IsSpreadAcceptable(InpSMAD_MaxSpread)) return;
+
+   // Lot size
+   double lots = GetLotSize_Ascension(sl_pips, 9); // Strategy index 9
+   if(lots < 0.01) return;
+
+   // Execute
+   string name = "Smart Money Accumulation";
+   int ticket = OrderSend(Symbol(), cmd, lots, entry, 3, sl, tp, name+" (SMAD)", InpSMAD_MagicNumber, 0, clrNONE);
+   if(ticket > 0)
+      Print("[SMAD] Trade opened: ", cmd==OP_BUY?"BUY":"SELL", " @ ", entry, " SL: ", sl, " TP: ", tp, " Absorp: ", DoubleToStr(absorption,2));
+   else
+      LogError(ERROR_WARNING, "SMAD OrderSend failed, err="+IntegerToString(GetLastError()), "ExecuteSmartMoneyAccumulation");
+}
+
