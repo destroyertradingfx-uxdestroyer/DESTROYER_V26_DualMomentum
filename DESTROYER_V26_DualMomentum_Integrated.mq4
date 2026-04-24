@@ -5948,11 +5948,58 @@ void ExecuteMathReversal()
 
 void ExecuteDualMomentumBreakout()
 {
-// V26.1: DUAL-MOMENTUM BREAKOUT WORKER
-// Donchian 20 breakout + MA200 absolute momentum filter + ATR RR
-// DISCONTINUED: Failed live audition (2020–2026). PF 0.67 over 8 trades.
-// Python validation on 2023–2026 showed PF 3.50 but failed to generalize.
-// Strategy disabled by default. Do NOT enable — remove for production.
+   // ===========================================================================
+   // DUAL-MOMENTUM BREAKOUT — WORKER SLOT 1 (DISABLED)
+   // ===========================================================================
+   // STATUS: PERMANENTLY DISABLED — FAILED LIVE AUDITION
+   //
+   // STRATEGY LOGIC:
+   //   Donchian Channel 20-period breakout + MA200 absolute momentum filter
+   //   Entry: price closes above/below Donchian High/Low AND above/below MA200
+   //   Exit: 1.5×ATR SL, 2.0×ATR TP, 3-bar cooldown
+   //
+   // AUDITION RESULTS (2020–2026 EURUSD H4 MT4 live test):
+   //   Trades: 8  |  Win Rate: 37.5%  |  Profit Factor: 0.67
+   //   Net P&L: -$556 USD over 6 years  |  Max DD: -$330
+   //   Conclusion: Statistically unprofitable. Removed from active hive.
+   //
+   // PYTHON VALIDATION (2023–2026):
+   //   Initial backtest (PERIOD_CURRENT session filter): PF 3.50, WR 69.0%
+   //   After bugfixes (PERIOD_H4 cooldown + health check bypass): PF 1.04
+   //   After MA200 removal (pure Donchian20): tested but not completed — disabled
+   //  before final verdict. Pattern: Python regime-specific success, MT4 out-of-sample failure.
+   //
+   // REPLACEMENT CANDIDATES TESTED (ALL FAILED):
+   //   • SPECTRE (CCI+BB mean-reversion fade)           → PF 0.57, WR 36.4%
+   //   • AEGIS SNAPBACK (BB fakeout + RSI fade)          → PF 0.93, WR 47.0%
+   //   • PHOENIX (BB squeeze false breakout fade)        → 4 trades (too sparse)
+   //   • NoiseBreakout (BB+KC breakout)                  → PF 0.40 (2023–2026 raw)
+   //                                                      Best-known: PF 1.95 (TP 3.5R, Vol 0.7) — still <2.0 threshold
+   //   • Absolute Momentum (12-month lookback)           → PF 0.92, too slow for H4
+   //
+   // SYSTEMIC FINDING:
+   //   Mean-reversion strategies FAIL on EURUSD H4 (confirmed across 3 AI proposals).
+   //   Breakout strategies show promise (Warden PF 2.48, Silicon-X PF 8.36, Reaper PF 12.56)
+   //   but DualMomentum and NoiseBreakout failed regime robustness testing.
+   //
+   // DECISION (2026-04-24): Leave slot empty.
+   //   Rationale: No candidate meets audition criteria (PF > 2.0, WR > 60%).
+   //               Forcing a sub-threshold strategy degrades portfolio (current PF: 2.00).
+   //   Action: Slot reserved for future validated strategy. Code preserved for reference.
+   //
+   // REFERENCES:
+   //   - STRATEGY_REPLACEMENT_BRIEFING.txt (full system context for external AI)
+   //   - GitHub commit: 8729980 "Disable DualMomentum permanently — failed audition"
+   //   - Strategy index: 1  |  Magic number: 777011 (inactive, do not reuse)
+   //
+   // V26.1 INTEGRATION NOTES:
+   //   - Worker slot index 1 (was Quantum Oscillator in V26 base)
+   //   - Magic 777011 registered in IsMyWorker() and GetStrategyName()
+   //   - Queen Bee risk allocator references this magic in V29 code (trail-enabled version)
+   //   - To remove completely: delete extern block + this function + all 777011 references
+   //
+   // DO NOT ENABLE — remove for production build.
+   // ===========================================================================
 if(Period() != PERIOD_H4) return;
 if(!InpDualMomentum_Enabled) return;
     // -------------------------------------------------------------------------
