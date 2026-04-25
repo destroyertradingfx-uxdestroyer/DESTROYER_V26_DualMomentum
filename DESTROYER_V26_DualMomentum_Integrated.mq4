@@ -1035,7 +1035,7 @@ extern double  InpBase_Risk_Percent    = 0.5;         // Base risk per trade as 
 extern double  InpBase_Risk_Percent_H1 = 0.25;        // Lower base risk for H1 strategies
 extern double  InpDefensiveDD_Percent  = 15.0;        // Drawdown threshold to trigger defensive mode
 extern double  InpDrawdown_Risk_Mult   = 0.3;         // Risk multiplier in defensive mode (0.3 = 30% of normal risk)
-extern int     InpMaxOpenTrades      = 5;           // Max concurrent trades allowed across all models (changed from 3)
+extern int     InpMaxOpenTrades      = 12;          // V27.1 RATCHET: Raised from 5 (grid systems need headroom)
 //--- Queen: State-Based Strategy Permissions
 extern bool    InpMR_Allow_Defensive  = true;  // Mean-reversion is often safe in drawdowns
 //--- Queen: Portfolio Risk Budget
@@ -1113,6 +1113,9 @@ extern double InpHuntsman_Risk_Scale  = 0.5;         // Risk scaling factor duri
 //--- Cerberus Model W: The Warden (Volatility Squeeze) ---
 sinput string Inp_Header_Warden = "====== CERBERUS MODEL W: THE WARDEN (VOLATILITY SQUEEZE) ======";
 extern bool   InpWarden_Enabled        = true;       // ENABLED: OPERATION LEVIATHAN - All strategies active
+   // V27.1 RATCHET: Reaper-Condition filter applied to MeanReversion & Warden
+   // OFF by default to increase trade frequency
+   extern bool   InpEnable_ReaperConditionFilter = false;      // Enable strict Reaper-market regime filter
 extern int    InpWarden_MagicNumber    = 777009;
 extern int    InpWarden_BB_Period      = 20;
 extern double InpWarden_BB_Dev         = 2.0;
@@ -5515,7 +5518,7 @@ void ExecuteMeanReversionModelV8_6()
    }
    
    // V17.5: QUANTUM PROBABILISTIC MODEL - Reaper Protocol Filter
-   if(!IsReaperConditionMet())
+   if(InpEnable_ReaperConditionFilter && !IsReaperConditionMet())
    {
       LogError(ERROR_INFO, "ExecuteMeanReversionModelV8_6: SKIPPED - Reaper market conditions not met (low volatility or RSI in dead zone)", "ExecuteMeanReversionModelV8_6");
       return;
@@ -8061,7 +8064,7 @@ void ExecuteWardenStrategy()
     if(!IsStrategyHealthy(InpWarden_MagicNumber)) return;
     
     // V17.5: QUANTUM PROBABILISTIC MODEL - Reaper Protocol Filter
-    if(!IsReaperConditionMet())
+   if(InpEnable_ReaperConditionFilter && !IsReaperConditionMet())
     {
         LogError(ERROR_INFO, "ExecuteWardenStrategy: SKIPPED - Reaper market conditions not met (low volatility or RSI in dead zone)", "ExecuteWardenStrategy");
         return;
