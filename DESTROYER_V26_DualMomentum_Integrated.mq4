@@ -2843,11 +2843,18 @@ double GetTotalCurrentRiskPercent()
 
         int magic = OrderMagicNumber();
         // Check if the trade belongs to any of our worker bees
-        if(OrderSymbol() == Symbol() && 
+        if(OrderSymbol() == Symbol() &&
            (magic == InpMagic_MeanReversion ||
-            magic == InpTitan_MagicNumber || magic == InpWarden_MagicNumber))
-        {
-            if (OrderStopLoss() > 0) // Only include trades with a defined stop loss
+            magic == InpTitan_MagicNumber ||
+            magic == InpWarden_MagicNumber ||
+            magic == InpReaper_BuyMagicNumber ||
+            magic == InpReaper_SellMagicNumber ||
+            magic == InpSX_MagicNumber ||
+            magic == InpChronos_MagicNumber ||
+            magic == InpMBD_MagicNumber ||
+            magic == InpSRA_MagicNumber ||
+            magic == InpSMAD_MagicNumber))
+        {            if (OrderStopLoss() > 0) // Only include trades with a defined stop loss
             {
                 double open_price = OrderOpenPrice();
                 double stop_loss_price = OrderStopLoss();
@@ -7165,9 +7172,17 @@ int CountOpenTrades()
          {
             // V8.5.1: Replaced switch with if/else if chain for MQL4 compliance
             int magic = OrderMagicNumber();
-            if(magic == InpMagic_MeanReversion || 
+            if(magic == InpMagic_MeanReversion ||
                magic == InpTitan_MagicNumber ||
-               magic == InpWarden_MagicNumber) // Corrected magic numbers
+               magic == InpWarden_MagicNumber ||
+               magic == InpReaper_BuyMagicNumber ||
+               magic == InpReaper_SellMagicNumber ||
+               magic == InpSX_MagicNumber ||
+               magic == InpChronos_MagicNumber ||
+               magic == InpMBD_MagicNumber ||
+               magic == InpSRA_MagicNumber ||
+               magic == InpSMAD_MagicNumber)
+            {
             {
                count++;
             }
@@ -7441,9 +7456,17 @@ void UpdateDashboard_Realtime()
          {
             // V8.5.1: Replaced switch with if/else if chain for MQL4 compliance
             int magic = OrderMagicNumber();
-            if(magic == InpMagic_MeanReversion || 
+            if(magic == InpMagic_MeanReversion ||
                magic == InpTitan_MagicNumber ||
-               magic == InpWarden_MagicNumber) // Corrected magic numbers
+               magic == InpWarden_MagicNumber ||
+               magic == InpReaper_BuyMagicNumber ||
+               magic == InpReaper_SellMagicNumber ||
+               magic == InpSX_MagicNumber ||
+               magic == InpChronos_MagicNumber ||
+               magic == InpMBD_MagicNumber ||
+               magic == InpSRA_MagicNumber ||
+               magic == InpSMAD_MagicNumber)
+            {
             {
                pnl += OrderProfit() + OrderSwap() + OrderCommission();
             }
@@ -7477,9 +7500,17 @@ void UpdateLiveStatsV8_6()
       {
          // V13.0 ELITE: All 7 strategies included
          int magic = OrderMagicNumber();
-         if(magic == InpMagic_MeanReversion || 
-            magic == InpTitan_MagicNumber ||
-            magic == InpWarden_MagicNumber)
+            if(magic == InpMagic_MeanReversion ||
+               magic == InpTitan_MagicNumber ||
+               magic == InpWarden_MagicNumber ||
+               magic == InpReaper_BuyMagicNumber ||
+               magic == InpReaper_SellMagicNumber ||
+               magic == InpSX_MagicNumber ||
+               magic == InpChronos_MagicNumber ||
+               magic == InpMBD_MagicNumber ||
+               magic == InpSRA_MagicNumber ||
+               magic == InpSMAD_MagicNumber)
+            {
          {
             double profit = OrderProfit() + OrderCommission() + OrderSwap();
             total_trades++;
