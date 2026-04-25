@@ -4357,13 +4357,13 @@ int OnInit()
        LogError(ERROR_INFO, "Treasurer: New High Watermark initialized and saved: " + DoubleToString(g_high_watermark_equity, 2), "OnInit");
    }
    
-   // --- GENEVA V4.1: Extended Performance Accumulator ---
-   for(int i=0; i<7; i++) // V11.1: Extended to 7 strategies
-   {
-       g_perfData[i].trades = 0;
-       g_perfData[i].grossProfit = 0.0;
-       g_perfData[i].grossLoss = 0.0;
-   }
+    // --- GENEVA V4.1: Extended Performance Accumulator ---
+    for(int i=0; i<12; i++) // V27.1: Extended to 12 slots (indices 0–11)
+    {
+        g_perfData[i].trades = 0;
+        g_perfData[i].grossProfit = 0.0;
+        g_perfData[i].grossLoss = 0.0;
+    }
    g_perfData[0].name = "Mean Reversion";
    g_perfData[1].name = "DualMomentum"; // V26.1: Dual-Momentum Breakout (was Quantum Oscillator slot)
    g_perfData[2].name = "Titan";
@@ -5380,8 +5380,8 @@ void ReconcileFinalPerformance()
    LogError(ERROR_INFO, "--- EXECUTING FINAL PERFORMANCE RECONCILIATION ---", "ReconcileFinalPerformance");
    
    // Create temporary performance structs to hold the reconciled data.
-   PerfData reconciledData[7]; 
-   for(int i=0; i<7; i++)
+    PerfData reconciledData[12];
+    for(int i=0; i<12; i++)
    {
       reconciledData[i].name = g_perfData[i].name; // Copy names over
       reconciledData[i].trades = 0;
@@ -5418,7 +5418,7 @@ void ReconcileFinalPerformance()
    }
    
    // Now, overwrite the potentially inaccurate global stats with the reconciled data.
-   for(int i=0; i<7; i++)
+    for(int i=0; i<12; i++)
    {
       g_perfData[i].trades = reconciledData[i].trades;
       g_perfData[i].grossProfit = reconciledData[i].grossProfit;
