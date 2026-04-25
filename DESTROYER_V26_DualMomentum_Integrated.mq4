@@ -1195,6 +1195,9 @@ extern int    InpDualMomentum_MagicNumber   = 777011;   // V26.1: Dual-Momentum 
 //+------------------------------------------------------------------+
 //| V27.1 NEW STRATEGIES: MBD, SRA, SMAD                            |
 //+------------------------------------------------------------------+
+// V27.1: Unified start time for new strategies (MBD/SRA/SMAD)
+extern datetime InpV27_StartTracking = D'2026.04.25 15:48:10'; // Start tracking new strategies from this moment (format: DD.MM.YYYY HH:MM:SS)
+
 // MOMENTUM BURST DETECTOR (MBD)
 extern bool   InpMBD_Enabled          = true;         // Enable MBD worker
 extern int    InpMBD_BB_Period        = 20;           // Bollinger Band period
@@ -1744,13 +1747,16 @@ string GetStrategyName(int index)
 {
     switch(index)
     {
-        case 1: return "Mean Reversion";
-        case 5: return "Quantum Oscillator"; // V8.5.9: UPDATED
-        case 7: return "Titan"; // Titan strategy
-        case 8: return "Warden"; // Warden strategy
-        case 9: return "Momentum Burst Detector"; // V27.1: MBD
-        case 10: return "Session Rotation Alpha";  // V27.1: SRA
-        case 11: return "Smart Money Accumulation"; // V27.1: SMAD
+        case 0: return "Mean Reversion";
+        case 1: return "DualMomentum";
+        case 2: return "Titan";
+        case 3: return "Warden";
+        case 4: return "Reaper Protocol";
+        case 5: return "Silicon-X";
+        case 6: return "Market Microstructure";
+        case 7: return "Momentum Burst Detector"; // V27.1: MBD
+        case 8: return "Session Rotation Alpha";  // V27.1: SRA
+        case 9: return "Smart Money Accumulation"; // V27.1: SMAD
 
         default: return "";
     }
@@ -12507,6 +12513,8 @@ void ExecuteMomentumBurstDetector()
    // Framework boilerplate
    if(Period() != PERIOD_H4) return;
    if(!InpMBD_Enabled) return;
+    // V27.1: Do not track/trade before configured start time
+    if(TimeCurrent() < InpV27_StartTracking) return;
    // Health check bypass: mean-reversion needs large sample before PF stabilizes
    // if(!IsStrategyHealthy(InpMBD_MagicNumber)) return;
    if(CountOpenTrades(InpMBD_MagicNumber) > 0) return;
@@ -12591,6 +12599,8 @@ void ExecuteSessionRotationAlpha()
 {
    if(Period() != PERIOD_H4) return;
    if(!InpSRA_Enabled) return;
+    // V27.1: Do not track/trade before configured start time
+    if(TimeCurrent() < InpV27_StartTracking) return;
    // if(!IsStrategyHealthy(InpSRA_MagicNumber)) return;
    if(CountOpenTrades(InpSRA_MagicNumber) > 0) return;
    if(g_hive_state == HIVE_STATE_DEFENSIVE && !InpSRA_Allow_Defensive)
@@ -12709,6 +12719,8 @@ void ExecuteSmartMoneyAccumulation()
 {
    if(Period() != PERIOD_H4) return;
    if(!InpSMAD_Enabled) return;
+    // V27.1: Do not track/trade before configured start time
+    if(TimeCurrent() < InpV27_StartTracking) return;
    // if(!IsStrategyHealthy(InpSMAD_MagicNumber)) return;
    if(CountOpenTrades(InpSMAD_MagicNumber) > 0) return;
    if(g_hive_state == HIVE_STATE_DEFENSIVE && !InpSMAD_Allow_Defensive)
