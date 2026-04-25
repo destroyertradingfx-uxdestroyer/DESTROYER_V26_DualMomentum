@@ -7186,7 +7186,6 @@ int CountOpenTrades()
                magic == InpSRA_MagicNumber ||
                magic == InpSMAD_MagicNumber)
             {
-            {
                count++;
             }
          }
