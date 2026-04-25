@@ -12523,7 +12523,7 @@ void ExecuteMomentumBurstDetector()
    double bb_lower = bb_mid - (InpMBD_BB_Dev * bb_std);
    double rsi = iRSI(NULL, PERIOD_H4, InpMBD_RSI_Period, PRICE_CLOSE, 1);
    double stoch_k = iStochastic(NULL, PERIOD_H4, InpMBD_Stoch_Period, 3, 3, MODE_SMA, STO_LOWHIGH, MODE_MAIN, 1);
-   double adx = iADX(NULL, PERIOD_H4, 14, PRICE_CLOSE, 1);
+    double adx = iADX(NULL, PERIOD_H4, 14, PRICE_CLOSE, MODE_MAIN, 1);
    double atr = iATR(NULL, PERIOD_H4, 14, 1);
 
    // Volume filter — DISABLED for forex H4
@@ -12602,7 +12602,7 @@ void ExecuteSessionRotationAlpha()
    ENUM_FOREX_SESSION session = SRA_GetCurrentSession();
 
    double rsi = iRSI(NULL, PERIOD_H4, 14, PRICE_CLOSE, 1);
-   double adx = iADX(NULL, PERIOD_H4, 14, PRICE_CLOSE, 1);
+    double adx = iADX(NULL, PERIOD_H4, 14, PRICE_CLOSE, MODE_MAIN, 1);
    double atr = iATR(NULL, PERIOD_H4, 14, 1);
 
    // Bollinger Bands with session-specific deviation
